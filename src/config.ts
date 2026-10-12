@@ -18,8 +18,7 @@ import type {
 export const site: SiteConfig = {
   title: 'Tsurezure',
   subtitle: '書きながら考えるためのブログ',
-  description:
-    'Your Name の個人ブログ。仕事で調べたことや作ったものの記録と、概念ごとにまとめた Wiki。',
+  description: 'Your Name の個人ブログ。仕事で調べたことや、作ったものの記録。',
   lang: 'ja',
   ogLocale: 'ja_JP',
   url: 'https://example.com',

@@ -132,6 +132,9 @@ export default defineConfig({
       // file under /_astro/ (CSP `script-src 'self'`), and fonts never become
       // data: URIs.
       assetsInlineLimit: 0,
+      // Mermaid's layout engines are large but load lazily, on pages with a
+      // diagram that needs them; nothing that size is on the critical path.
+      chunkSizeWarningLimit: 1600,
     },
   },
 })
