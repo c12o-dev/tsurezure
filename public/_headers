@@ -1,0 +1,44 @@
+# Security headers for every response, in the format Cloudflare Workers / Pages and
+# Netlify read. Other hosts: see README → Deploy.
+#
+# Every page script is an external file under /_astro/ (no inline scripts), so
+# script-src needs no hashes. The exceptions, and why:
+#   script-src 'wasm-unsafe-eval'   Pagefind compiles its WebAssembly search index
+#   style-src 'unsafe-inline'       KaTeX and Expressive Code write style="" attributes,
+#                                   Mermaid writes <style> into its SVG
+#   img-src data:                   SVG masks and the grain texture in the CSS
+#   img-src avatars.githubusercontent.com, connect-src api.github.com
+#                                   the ::github card fetches repository data
+# Turn features off in src/config.ts? The matching sources can go. If your host
+# injects an analytics script, add its origin to script-src and connect-src.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://avatars.githubusercontent.com; font-src 'self'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-site
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+# Hashed filenames: safe to cache forever.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Font slices are versioned by the package, not the filename: cache a month.
+/fonts/*
+  Cache-Control: public, max-age=2592000
+
+# Generated per post under a stable name; a retitled post gets a new image within a day.
+/og/*
+  Cache-Control: public, max-age=86400
+/cover/*
+  Cache-Control: public, max-age=86400
+
+# Stable-named icons: cache for a week.
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800

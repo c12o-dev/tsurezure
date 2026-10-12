@@ -1,0 +1,56 @@
+name: Publish scheduled posts
+
+# Publishes posts with `draft: true` and `reviewed: true` once their
+# `published` date arrives (scripts/publish-scheduled.mjs), commits the change
+# to the default branch and pushes it. Hosts that build on push (Cloudflare
+# Workers/Pages, Netlify, Vercel) redeploy from that push.
+#
+# Setup: Settings → Actions → General → Workflow permissions → "Read and write".
+# DEPLOY_HOOK_URL (optional secret): a deploy hook from your host, called after
+# a post was published, for hosts that do not build on push.
+# If the default branch is protected, replace the push with a pull request.
+# GitHub disables scheduled workflows after 60 days without repository activity.
+on:
+  schedule:
+    - cron: "0 9 * * *" # 18:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo # the date `published` is compared against
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Publish posts whose date has come
+        id: publish
+        run: |
+          output=$(node scripts/publish-scheduled.mjs)
+          echo "$output"
+          if echo "$output" | grep -q '^Published:'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Commit and push
+        if: steps.publish.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/content/posts
+          git commit -m "Publish scheduled posts ($(date +%Y-%m-%d))"
+          git push
+      - name: Call the deploy hook
+        if: steps.publish.outputs.changed == 'true'
+        env:
+          HOOK: ${{ secrets.DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "DEPLOY_HOOK_URL is not set; relying on the push to trigger a build."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null

@@ -53,7 +53,7 @@ const jsonLd = [
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: d.title,
-    description: d.description || d.title,
+    description: d.description || remarkPluginFrontmatter.excerpt || d.title,
     keywords: d.tags,
     image: ogImageUrl,
     url: postUrl,
@@ -78,7 +78,7 @@ const jsonLd = [
 ]
 ---
 
-<Base title={d.title} description={d.description} lang={d.lang} article ogImage={ogImageUrl}>
+<Base title={d.title} description={d.description || remarkPluginFrontmatter.excerpt} lang={d.lang} article ogImage={ogImageUrl}>
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
 
   <div class="container">

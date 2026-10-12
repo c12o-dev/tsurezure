@@ -13,11 +13,13 @@
   "scripts": {
     "dev": "node scripts/build-fonts.mjs && astro dev",
     "build": "node scripts/build-fonts.mjs && astro build",
+    "build:fonts": "node scripts/build-fonts.mjs",
     "preview": "astro preview",
-    "typecheck": "astro check",
+    "new": "node scripts/new.mjs",
+    "publish-scheduled": "node scripts/publish-scheduled.mjs",
     "check": "biome check .",
     "fix": "biome check --write .",
-    "build:fonts": "node scripts/build-fonts.mjs",
+    "typecheck": "astro check",
     "test:unit": "vitest run"
   },
   "dependencies": {
