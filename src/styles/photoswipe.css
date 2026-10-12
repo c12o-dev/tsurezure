@@ -1,0 +1,17 @@
+.pswp {
+  --pswp-bg: #0b0b0c;
+}
+.pswp__button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 44px !important;
+  height: 44px !important;
+  margin-top: 16px !important;
+  margin-right: 12px !important;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.pswp__button:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}

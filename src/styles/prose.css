@@ -1,0 +1,310 @@
+/* Article body. Replaces @tailwindcss/typography. */
+
+.prose {
+  max-width: var(--measure);
+  color: var(--fg-2);
+  font-size: 16px;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+  counter-reset: h2;
+}
+@media (max-width: 639px) {
+  .prose {
+    font-size: 15.5px;
+    line-height: 1.85;
+  }
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+.prose :where(p, ul, ol, blockquote, table, figure, details) {
+  margin-block: 1.25em;
+}
+.prose strong {
+  color: var(--fg-1);
+  font-weight: 700;
+}
+.prose em {
+  font-style: normal;
+  text-emphasis: filled dot;
+  text-emphasis-color: var(--accent);
+  text-emphasis-position: over right;
+}
+
+/* headings */
+.prose :where(h2, h3, h4) {
+  color: var(--fg-1);
+  font-weight: 700;
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+.prose h2 {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.45;
+  margin: 2.6em 0 0.9em;
+  padding-top: 1.1em;
+  border-top: 1px solid var(--line-1);
+  counter-increment: h2;
+}
+.prose h2::before {
+  content: counter(h2, decimal-leading-zero);
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.prose.is-wiki h2 {
+  font-family: var(--font-sans);
+}
+.prose h3 {
+  font-size: 20px;
+  line-height: 1.5;
+  margin: 2em 0 0.6em;
+}
+.prose h4 {
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 1.75em 0 0.5em;
+}
+@media (max-width: 639px) {
+  .prose h2 {
+    font-size: 22px;
+  }
+  .prose h3 {
+    font-size: 18px;
+  }
+}
+/* heading anchors from rehype-autolink-headings */
+.prose .anchor {
+  margin-left: 0.35em;
+  color: var(--fg-4);
+  opacity: 0;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-decoration: none;
+  transition:
+    opacity var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.prose :is(h2, h3, h4):hover .anchor,
+.prose .anchor:focus-visible {
+  opacity: 1;
+}
+.prose .anchor:hover {
+  color: var(--accent);
+}
+
+/* links */
+.prose a:not(.no-styling):not(.anchor) {
+  color: var(--fg-1);
+  text-decoration: underline;
+  text-decoration-color: rgba(232, 180, 88, 0.5);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  transition:
+    color var(--dur) var(--ease),
+    text-decoration-color var(--dur) var(--ease);
+}
+.prose a:not(.no-styling):not(.anchor):hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+/* lists */
+.prose :where(ul, ol) {
+  padding-left: 1.4em;
+}
+.prose ul {
+  list-style: none;
+}
+.prose ul > li {
+  position: relative;
+}
+.prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1em;
+  top: 0.85em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--fg-3);
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose ol > li::marker {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--fg-3);
+}
+.prose li {
+  margin-block: 0.35em;
+}
+.prose li > :where(ul, ol) {
+  margin-block: 0.35em;
+}
+
+/* inline code */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--line-1);
+  color: var(--fg-1);
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+/* blockquote (non-admonition) */
+.prose blockquote:not(.admonition) {
+  padding: 0.2em 0 0.2em 1.25em;
+  border-left: 2px solid var(--line-2);
+  color: var(--fg-2);
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+.prose.is-wiki blockquote:not(.admonition) {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+.prose blockquote > :first-child {
+  margin-top: 0;
+}
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* images */
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-1);
+  cursor: zoom-in;
+}
+.prose figure figcaption,
+.prose img + em {
+  display: block;
+  margin-top: 0.75em;
+  font-size: 14px;
+  color: var(--fg-3);
+  text-align: center;
+  text-emphasis: none;
+}
+
+/* hr */
+.prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--line-1);
+  margin-block: 3em;
+}
+
+/* tables: the table itself scrolls, never the page */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.prose thead th {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  text-align: left;
+  white-space: nowrap;
+}
+.prose :where(th, td) {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-1);
+  vertical-align: top;
+}
+.prose tbody tr:hover {
+  background: var(--bg-1);
+}
+
+/* details */
+.prose details {
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  background: var(--bg-1);
+  padding: 0.75em 1.25em;
+}
+.prose details > summary {
+  cursor: pointer;
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+/* KaTeX */
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.5em;
+}
+.prose .katex {
+  color: var(--fg-1);
+}
+
+/* Mermaid */
+.prose pre.mermaid {
+  background: var(--bg-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  text-align: center;
+  overflow-x: auto;
+  color: transparent;
+}
+.prose pre.mermaid[data-processed] {
+  color: inherit;
+}
+
+/* spoiler */
+.prose .spoiler {
+  background: var(--bg-3);
+  color: var(--bg-3);
+  border-radius: 4px;
+  padding: 0 4px;
+  transition: color var(--dur) var(--ease);
+}
+.prose .spoiler:hover {
+  color: var(--fg-1);
+}
+
+/* The article header already draws a rule; the first section starts flush. */
+.prose > h2:first-child,
+.prose > section:first-child > h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.prose > section > :first-child:not(h2) {
+  margin-top: 0;
+}
+
+/* Narrow screens: let a wide table scroll inside itself, never the page. */
+@media (max-width: 767px) {
+  .prose table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .prose table :where(td, th) {
+    white-space: normal;
+    min-width: 7em;
+  }
+}
