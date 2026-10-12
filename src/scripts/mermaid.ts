@@ -17,6 +17,7 @@ if (nodes.length > 0) {
         primaryTextColor: token('--fg-1'),
         primaryBorderColor: token('--line-2'),
         lineColor: token('--accent'),
+        edgeLabelBackground: token('--bg-1'),
         fontFamily: token('--font-sans'),
       },
     })
