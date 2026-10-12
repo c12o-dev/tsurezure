@@ -1,0 +1,45 @@
+{
+  "name": "tsurezure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dark, Japanese-first Astro blog template with posts, an optional wiki, and generated OG images",
+  "author": "Seu (https://c12o.net)",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "check": "biome check .",
+    "fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/svelte": "^9.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.8",
+    "astro-expressive-code": "^0.44.2",
+    "astro-icon": "^1.2.0",
+    "pagefind": "^1.5.2",
+    "sharp": "^0.35.5",
+    "svelte": "^5.57.2",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@biomejs/biome": "^2.5.15",
+    "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}
