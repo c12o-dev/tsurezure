@@ -1,5 +1,5 @@
 /* Custom directive components. Class names come from
-   src/plugins/rehype-component-*.mjs and stay stable. */
+   src/plugins/remark-directives.mjs and stay stable. */
 
 /* ---------- admonitions ---------- */
 .prose .admonition {
@@ -482,4 +482,25 @@ a.card-google-map:hover .map-title {
   .prose .chart__svg {
     min-width: 560px;
   }
+}
+
+/* Map card without an `image`: a pin drawn in CSS instead of a remote picture. */
+.card-google-map img.map-image {
+  display: block;
+  object-fit: cover;
+}
+.card-google-map .map-pin {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.card-google-map .map-pin::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
 }
