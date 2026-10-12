@@ -1,0 +1,19 @@
+---
+import type { Page } from 'astro'
+import { ui } from '../config'
+
+interface Props {
+  page: Page
+}
+
+const { page } = Astro.props
+const pad = (n: number) => String(n).padStart(2, '0')
+---
+
+{page.lastPage > 1 && (
+  <nav class="pagination" aria-label={ui.pagination.aria}>
+    {page.url.prev ? <a href={page.url.prev} rel="prev"><span aria-hidden="true">←</span> {ui.pagination.newer}</a> : <span />}
+    <span class="mono-label">{pad(page.currentPage)} / {pad(page.lastPage)}</span>
+    {page.url.next ? <a href={page.url.next} rel="next">{ui.pagination.older} <span aria-hidden="true">→</span></a> : <span />}
+  </nav>
+)}

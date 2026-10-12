@@ -1,0 +1,110 @@
+---
+import type { GetStaticPaths, Page } from 'astro'
+import FeaturedPost from '../components/FeaturedPost.astro'
+import Pagination from '../components/Pagination.astro'
+import PostCard from '../components/PostCard.astro'
+import WikiRows from '../components/WikiRows.astro'
+import { ui } from '../config'
+import Base from '../layouts/Base.astro'
+import { getSortedPosts, getSortedWiki, type Post } from '../utils/content'
+import { fill } from '../utils/text'
+
+// Home: the newest post as the feature, the rest paginated 12 per page at
+// /, /2/, /3/ … (getStaticPaths runs in isolation, so the size is inline).
+export const getStaticPaths = (async ({ paginate }) => {
+  const [featured, ...rest] = await getSortedPosts()
+  return paginate(rest, { pageSize: 12, props: { featured } })
+}) satisfies GetStaticPaths
+
+interface Props {
+  page: Page<Post>
+  featured?: Post
+}
+
+const { page, featured } = Astro.props
+const isFirst = page.currentPage === 1
+const categories = isFirst
+  ? [...new Set(page.data.map((post) => post.data.category).filter((c): c is string => Boolean(c)))]
+  : []
+const wiki = isFirst ? (await getSortedWiki()).slice(0, 6) : []
+const total = page.total + (featured ? 1 : 0)
+---
+
+<Base title={isFirst ? undefined : fill(ui.home.pageTitle, { n: page.currentPage })}>
+  <div class="container">
+    {isFirst && featured && (
+      <section class="section" aria-labelledby="latest-label">
+        <div class="section-head">
+          <div class="section-head__title">
+            <span class="mono-label is-accent" id="latest-label">{ui.home.latest}</span>
+          </div>
+          <span class="mono-label section-head__count">{fill(ui.post.count, { n: String(total).padStart(3, '0') })}</span>
+        </div>
+        <FeaturedPost entry={featured} />
+      </section>
+    )}
+
+    <section class:list={['section', { 'section--after-featured': isFirst }]} aria-labelledby="posts-label">
+      <div class="section-head">
+        <div class="section-head__title">
+          <h2 class="mono-label" id="posts-label">{isFirst ? ui.home.posts : fill(ui.home.pageHeading, { n: page.currentPage })}</h2>
+        </div>
+        <a href="/archive/" class="more-link">{ui.home.archive} <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+
+      {categories.length > 1 && (
+        <div class="pill-group home-filter" role="group" aria-label={ui.home.filterAria} data-filter>
+          <button type="button" class="pill" aria-pressed="true" data-filter-value="">{ui.home.all}</button>
+          {categories.map((category) => (
+            <button type="button" class="pill" aria-pressed="false" data-filter-value={category}>{category}</button>
+          ))}
+        </div>
+      )}
+
+      <div class="post-grid" data-filter-target>
+        {page.data.map((entry) => <PostCard entry={entry} />)}
+      </div>
+
+      <Pagination page={page} />
+    </section>
+
+    {wiki.length > 0 && (
+      <section class="section" aria-labelledby="wiki-label">
+        <div class="section-head">
+          <div class="section-head__title">
+            <h2 class="mono-label" id="wiki-label">{ui.home.wiki}</h2>
+            <span class="mono-label section-head__count">{ui.home.wikiRecent}</span>
+          </div>
+          <a href="/wiki/" class="more-link">{ui.home.wikiAll} <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+        <WikiRows entries={wiki} />
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .section--after-featured {
+    margin-top: var(--space-8);
+  }
+  .home-filter {
+    margin-bottom: var(--space-5);
+  }
+</style>
+
+<script>
+  // Category filter on page 1. Display toggle only; every card stays in the HTML.
+  const group = document.querySelector<HTMLElement>('[data-filter]')
+  const grid = document.querySelector<HTMLElement>('[data-filter-target]')
+  group?.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-filter-value]')
+    if (!button || !grid) return
+    const value = button.dataset.filterValue ?? ''
+    for (const b of group.querySelectorAll<HTMLButtonElement>('[data-filter-value]')) {
+      b.setAttribute('aria-pressed', String(b === button))
+    }
+    for (const card of grid.querySelectorAll<HTMLElement>('.post-card')) {
+      card.hidden = value !== '' && card.dataset.category !== value
+    }
+  })
+</script>

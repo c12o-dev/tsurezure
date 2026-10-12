@@ -1,0 +1,30 @@
+---
+import { topicLabel, type WikiPage, wikiTopic } from '../utils/content'
+import { formatDate } from '../utils/date'
+import { getWikiUrl } from '../utils/url'
+
+interface Props {
+  entries: WikiPage[]
+  single?: boolean
+  showTopic?: boolean
+}
+const { entries, single = false, showTopic = true } = Astro.props
+---
+
+<ul class:list={['row-list', { 'row-list--single': single }]}>
+  {entries.map((entry) => (
+    <li>
+      <a href={getWikiUrl(entry.id)} class:list={['row-link', { 'row-link--no-topic': !showTopic }]}>
+        {showTopic && <span class="row-link__topic mono-label">{topicLabel(wikiTopic(entry.id))}</span>}
+        <span class="row-link__title">{entry.data.title}</span>
+        <time class="row-link__date mono-label" datetime={entry.data.updated.toISOString()}>{formatDate(entry.data.updated)}</time>
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .row-link--no-topic {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+</style>

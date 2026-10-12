@@ -1,0 +1,188 @@
+---
+import type { MarkdownHeading } from 'astro'
+import { ui } from '../config'
+import { fill } from '../utils/text'
+
+// Table of contents. Rendered twice by the page: a sticky
+// sidebar list (lg+) and a collapsible <details> above the body (<lg).
+interface Props {
+  headings: MarkdownHeading[]
+  variant: 'sidebar' | 'inline'
+  maxDepth?: number
+}
+
+const { headings, variant, maxDepth = 3 } = Astro.props
+const minDepth = Math.min(...headings.map((h: MarkdownHeading) => h.depth), 10)
+type Item = MarkdownHeading & { level: number; num: string }
+let n = 0
+const numbered: Item[] = headings
+  .filter((h: MarkdownHeading) => h.depth < minDepth + (maxDepth - 1))
+  .map((h: MarkdownHeading) => {
+    const level = h.depth - minDepth
+    return {
+      ...h,
+      text: h.text.replace(/#\s*$/, '').trim(),
+      level,
+      num: level === 0 ? String(++n).padStart(2, '0') : '',
+    }
+  })
+---
+{numbered.length > 1 && variant === "sidebar" && (
+  <nav class="toc" aria-label={ui.toc.label} data-toc>
+    <p class="mono-label toc__label">{ui.toc.label}</p>
+    <ol class="toc__list">
+      {numbered.map((h: Item) => (
+        <li class:list={["toc__item", `is-l${h.level}`]}>
+          <a href={`#${h.slug}`} data-toc-link={h.slug}>
+            {h.num && <span class="toc__num">{h.num}</span>}
+            <span>{h.text}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}
+{numbered.length > 1 && variant === "inline" && (
+  <details class="toc-inline">
+    <summary>
+      <span class="mono-label">{ui.toc.label}</span>
+      <span class="toc-inline__count mono-label">{fill(ui.toc.sections, { n })}</span>
+    </summary>
+    <ol class="toc__list">
+      {numbered.map((h: Item) => (
+        <li class:list={["toc__item", `is-l${h.level}`]}>
+          <a href={`#${h.slug}`}>
+            {h.num && <span class="toc__num">{h.num}</span>}
+            <span>{h.text}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </details>
+)}
+
+<style>
+.toc__label {
+  margin: 0 0 var(--space-4);
+}
+.toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--line-1);
+}
+.toc__item a {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 6px 0 6px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-3);
+  transition: color var(--dur) var(--ease);
+}
+.toc__item a::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background var(--dur) var(--ease);
+}
+.toc__item a:hover {
+  color: var(--fg-1);
+}
+.toc__item a.is-active {
+  color: var(--fg-1);
+}
+.toc__item a.is-active::before {
+  background: var(--accent);
+}
+.toc__item.is-l1 a {
+  padding-left: 34px;
+  font-size: 12.5px;
+}
+.toc__item.is-l2 a {
+  padding-left: 48px;
+  font-size: 12px;
+}
+.toc__num {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 2;
+  color: var(--fg-3);
+}
+.toc__item a.is-active .toc__num {
+  color: var(--accent);
+}
+
+.toc-inline {
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  background: var(--bg-1);
+}
+.toc-inline summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.toc-inline summary::-webkit-details-marker {
+  display: none;
+}
+.toc-inline summary::after {
+  content: "+";
+  font-family: var(--font-mono);
+  color: var(--fg-3);
+}
+.toc-inline[open] summary::after {
+  content: "−";
+}
+.toc-inline__count {
+  margin-left: auto;
+  margin-right: 12px;
+  color: var(--fg-3);
+}
+.toc-inline .toc__list {
+  margin: 0 16px 14px;
+}
+</style>
+
+<script>
+// Scroll spy: highlight the heading closest above the reading line.
+const toc = document.querySelector<HTMLElement>("[data-toc]");
+if (toc) {
+  const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>("[data-toc-link]"));
+  const targets = links
+    .map((a) => document.getElementById(a.dataset.tocLink ?? ""))
+    .filter((el): el is HTMLElement => Boolean(el));
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const line = window.innerHeight * 0.25;
+    let current = 0;
+    targets.forEach((t, i) => {
+      if (t.getBoundingClientRect().top - line <= 0) current = i;
+    });
+    links.forEach((a, i) => a.classList.toggle("is-active", i === current));
+  };
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true },
+  );
+  update();
+}
+</script>

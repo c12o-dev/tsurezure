@@ -1,0 +1,13 @@
+---
+import '@fontsource-variable/jetbrains-mono/wght-italic.css'
+
+interface Props {
+  class?: string
+  wiki?: boolean
+}
+const { class: className, wiki = false } = Astro.props
+---
+
+<div data-pagefind-body class:list={['prose', { 'is-wiki': wiki }, className]}>
+  <slot />
+</div>

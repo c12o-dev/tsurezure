@@ -1,0 +1,259 @@
+---
+import { ui } from '../config'
+import { getSortedWiki, getWikiByTopic, topicLabel, wikiTopic } from '../utils/content'
+import { formatDate } from '../utils/date'
+import { fill } from '../utils/text'
+import { getWikiUrl } from '../utils/url'
+
+// Wiki index: topic cards and an update timeline.
+const topics = await getWikiByTopic()
+const timeline = (await getSortedWiki()).slice(0, 20)
+const total = topics.reduce((n, topic) => n + topic.entries.length, 0)
+---
+
+<div class="container">
+  <header class="page-head">
+    <span class="mono-label is-accent">{ui.wiki.title}</span>
+    <div class="page-head__row">
+      <h1 class="t-h1-wiki">{ui.wiki.heading}</h1>
+      <span class="mono-label">{fill(ui.wiki.count, { topics: topics.length, pages: total })}</span>
+    </div>
+    <p class="t-lead page-head__lead">{ui.wiki.lead}</p>
+  </header>
+
+  {topics.length === 0 ? (
+    <p class="t-small wiki-empty">{ui.wiki.empty}</p>
+  ) : (
+    <>
+      <section aria-labelledby="topics-label">
+        <div class="section-head">
+          <h2 class="mono-label" id="topics-label">{ui.wiki.topics}</h2>
+        </div>
+        <div class="topic-grid">
+          {topics.map((t) => (
+            <article class="topic-card surface grain" id={`topic-${t.topic}`}>
+              <div class="topic-card__head">
+                <h3 class="t-title-card">{topicLabel(t.topic)}</h3>
+                <span class="mono-label">{String(t.entries.length).padStart(2, '0')}</span>
+              </div>
+              <p class="mono-label topic-card__meta">{ui.wiki.updated} {formatDate(t.updated)}</p>
+              <ul class="topic-card__list">
+                {t.entries.slice(0, 4).map((e) => (
+                  <li><a href={getWikiUrl(e.id)}>{e.data.title}</a></li>
+                ))}
+              </ul>
+              {t.entries.length > 4 && (
+                <details class="topic-card__more">
+                  <summary class="more-link">{ui.wiki.showAll} <span class="arrow" aria-hidden="true">→</span></summary>
+                  <ul class="topic-card__list">
+                    {t.entries.slice(4).map((e) => (
+                      <li><a href={getWikiUrl(e.id)}>{e.data.title}</a></li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="timeline-label">
+        <div class="section-head">
+          <h2 class="mono-label" id="timeline-label">{ui.wiki.timeline}</h2>
+          <span class="mono-label section-head__count">{fill(ui.wiki.timelineCount, { n: timeline.length })}</span>
+        </div>
+        <ol class="timeline">
+          {timeline.map((e) => (
+            <li class="timeline__item">
+              <time class="mono-label timeline__date" datetime={e.data.updated.toISOString()}>{formatDate(e.data.updated)}</time>
+              <span class="timeline__dot" aria-hidden="true"></span>
+              <a href={getWikiUrl(e.id)} class="timeline__body">
+                <span class="timeline__topic mono-label">{topicLabel(wikiTopic(e.id))}</span>
+                <span class="timeline__title">{e.data.title}</span>
+                <span class="timeline__summary t-small clamp-2">{e.data.summary}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
+  )}
+</div>
+
+<style>
+.topic-card__head h3 {
+  margin: 0;
+}
+.wiki-empty {
+  color: var(--fg-3);
+}
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+@media (max-width: 1023px) {
+  .topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .topic-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  overflow: hidden;
+}
+.topic-card::before {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(closest-side, rgba(232, 180, 88, 0.12), transparent);
+  pointer-events: none;
+}
+.topic-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.topic-card__meta {
+  margin: 0 0 var(--space-3);
+  color: var(--fg-3);
+}
+.topic-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line-1);
+}
+.topic-card__list li {
+  border-bottom: 1px solid var(--line-1);
+}
+.topic-card__list a {
+  display: block;
+  padding: 10px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  transition: color var(--dur) var(--ease);
+}
+.topic-card__list a:hover {
+  color: var(--accent);
+}
+.topic-card__more summary {
+  list-style: none;
+  cursor: pointer;
+  margin-top: var(--space-3);
+}
+.topic-card__more summary::-webkit-details-marker {
+  display: none;
+}
+.topic-card__more[open] summary {
+  display: none;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.timeline__item {
+  display: grid;
+  grid-template-columns: 112px 24px minmax(0, 1fr);
+  align-items: start;
+}
+.timeline__date {
+  padding-top: 22px;
+  color: var(--fg-3);
+}
+.timeline__dot {
+  position: relative;
+  align-self: stretch;
+}
+.timeline__dot::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line-1);
+}
+.timeline__dot::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 4px);
+  top: 21px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--bg-0);
+  border: 1px solid var(--line-2);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.timeline__item:first-child .timeline__dot::after {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.timeline__item:hover .timeline__dot::after {
+  border-color: var(--accent);
+}
+.timeline__body {
+  display: grid;
+  gap: 4px;
+  padding: 14px var(--space-4);
+  margin-left: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: background var(--dur) var(--ease);
+}
+.timeline__body:hover {
+  background: var(--bg-1);
+}
+.timeline__topic {
+  color: var(--fg-3);
+}
+.timeline__title {
+  color: var(--fg-1);
+  font-weight: 700;
+  line-height: 1.6;
+  transition: color var(--dur) var(--ease);
+}
+.timeline__body:hover .timeline__title {
+  color: var(--accent);
+}
+.timeline__summary {
+  color: var(--fg-3);
+}
+@media (max-width: 639px) {
+  .timeline__item {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+  .timeline__date {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 14px 0 0 var(--space-4);
+    margin-left: var(--space-2);
+  }
+  .timeline__dot {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .timeline__body {
+    grid-column: 2;
+    padding-top: 6px;
+  }
+  .timeline__dot::after {
+    top: 18px;
+  }
+}
+</style>

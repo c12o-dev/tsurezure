@@ -1,8 +1,0 @@
----
-import { getSortedPosts } from '../utils/content'
-import { getPostUrl } from '../utils/url'
-
-const posts = await getSortedPosts()
----
-
-<ul>{posts.map((post) => <li><a href={getPostUrl(post.id)}>{post.data.title}</a></li>)}</ul>

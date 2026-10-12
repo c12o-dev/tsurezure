@@ -1,0 +1,174 @@
+---
+import { render } from 'astro:content'
+import { ui } from '../config'
+import { topicLabel, type WikiPage, wikiTopic } from '../utils/content'
+import { formatDate } from '../utils/date'
+import { fill } from '../utils/text'
+import { getWikiUrl } from '../utils/url'
+import Breadcrumb from './Breadcrumb.astro'
+import Prose from './Prose.astro'
+import Toc from './Toc.astro'
+import WikiRows from './WikiRows.astro'
+
+interface Props {
+  entry: WikiPage
+  all: WikiPage[]
+}
+
+const { entry, all } = Astro.props
+const { Content, headings } = await render(entry)
+const d = entry.data
+const topic = wikiTopic(entry.id)
+const siblings = all.filter((e) => wikiTopic(e.id) === topic && e.id !== entry.id)
+---
+
+<div class="container">
+  <div class="article-layout">
+    <article class="article-layout__main">
+      <header class="article-head">
+        <Breadcrumb items={[{ label: ui.wiki.title, href: '/wiki/' }, { label: topicLabel(topic), href: `/wiki/#topic-${topic}` }]} />
+        <h1 class="article-head__title t-h1-wiki" data-pagefind-meta="title" data-pagefind-weight="10">{d.title}</h1>
+        <div class="wiki-summary" data-pagefind-weight="5">
+          <span class="mono-label">{ui.wiki.summary}</span>
+          <p>{d.summary}</p>
+        </div>
+        <div class="meta mono-label">
+          <span>{ui.wiki.created} <time datetime={d.created.toISOString()}>{formatDate(d.created)}</time></span>
+          <span class="meta__sep">·</span>
+          <span>{ui.wiki.updated} <time datetime={d.updated.toISOString()}>{formatDate(d.updated)}</time></span>
+          {d.tags.length > 0 && <span class="meta__sep">·</span>}
+          {d.tags.map((tag) => <span class="wiki-tag">#{tag}</span>)}
+          {d.draft && <span class="badge">{ui.wiki.draft}</span>}
+        </div>
+      </header>
+
+      <div class="below-lg">
+        <Toc headings={headings} variant="inline" />
+      </div>
+
+      <Prose wiki>
+        <Content />
+      </Prose>
+
+      {d.sources.length > 0 && (
+        <section class="wiki-sources">
+          <h2 class="mono-label">{ui.wiki.sources}</h2>
+          <ol>
+            {d.sources.map((source) => (
+              <li><a href={source} target="_blank" rel="noopener">{source}</a></li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {d.publishedTo && (
+        <a class="wiki-published surface" href={d.publishedTo}>
+          <span class="mono-label">{ui.wiki.publishedTo}</span>
+          <span>{ui.wiki.publishedToLink} <span aria-hidden="true">→</span></span>
+        </a>
+      )}
+
+      {siblings.length > 0 && (
+        <section class="section wiki-siblings" aria-labelledby="siblings-label">
+          <div class="section-head">
+            <h2 class="mono-label" id="siblings-label">{fill(ui.wiki.sameTopic, { label: topicLabel(topic) })}</h2>
+          </div>
+          <WikiRows entries={siblings} single showTopic={false} />
+        </section>
+      )}
+    </article>
+
+    <aside class="article-layout__side" aria-label={ui.post.sidebar}>
+      <div class="article-layout__sticky">
+        <Toc headings={headings} variant="sidebar" />
+        {siblings.length > 0 && (
+          <nav aria-label={fill(ui.wiki.sameTopic, { label: topicLabel(topic) })}>
+            <p class="mono-label side-block__label">{topicLabel(topic)}</p>
+            <ul class="side-list">
+              {siblings.slice(0, 8).map((s) => (
+                <li><a href={getWikiUrl(s.id)}>{s.data.title}</a></li>
+              ))}
+            </ul>
+          </nav>
+        )}
+      </div>
+    </aside>
+  </div>
+</div>
+
+<style>
+.wiki-tag {
+  text-transform: none;
+}
+.wiki-siblings {
+  margin-top: var(--space-8);
+}
+.wiki-summary {
+  display: grid;
+  gap: 8px;
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-1);
+  border: 1px solid var(--line-1);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+.wiki-summary .mono-label {
+  color: var(--accent);
+}
+.wiki-summary p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--fg-1);
+}
+.wiki-sources {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line-1);
+}
+.wiki-sources ol {
+  margin: var(--space-3) 0 0;
+  padding-left: 1.4em;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.wiki-sources a {
+  color: var(--fg-3);
+  word-break: break-all;
+}
+.wiki-sources a:hover {
+  color: var(--accent);
+}
+.wiki-published {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  color: var(--fg-1);
+  transition: border-color var(--dur) var(--ease);
+}
+.wiki-published:hover {
+  border-color: var(--line-2);
+}
+.wiki-published .mono-label {
+  color: var(--accent);
+}
+.side-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--line-1);
+}
+.side-list a {
+  display: block;
+  padding: 6px 0 6px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-3);
+  transition: color var(--dur) var(--ease);
+}
+.side-list a:hover {
+  color: var(--fg-1);
+}
+</style>

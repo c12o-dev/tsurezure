@@ -1,0 +1,50 @@
+---
+import { Icon } from 'astro-icon/components'
+import { features, ui } from '../config'
+
+interface Props {
+  title: string
+  url: string
+}
+const { title, url } = Astro.props
+const xUrl = `https://x.com/intent/post?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+---
+
+{features.share.length > 0 && (
+  <div class="share">
+    {features.share.includes('x') && (
+      <a class="btn" href={xUrl} target="_blank" rel="noopener">
+        <Icon name="fa6-brands:x-twitter" aria-hidden="true" /> {ui.post.shareX}
+      </a>
+    )}
+    {features.share.includes('copy') && (
+      <button type="button" class="btn" data-copy-url={url} data-copied={ui.post.copied}>
+        <Icon name="material-symbols:link-rounded" aria-hidden="true" />
+        <span data-copy-label>{ui.post.copyLink}</span>
+      </button>
+    )}
+  </div>
+)}
+
+<style>
+  .share {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+</style>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy-url]')) {
+    const label = button.querySelector('[data-copy-label]')
+    const original = label?.textContent ?? ''
+    button.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(button.dataset.copyUrl ?? location.href)
+      if (!label) return
+      label.textContent = button.dataset.copied ?? original
+      window.setTimeout(() => {
+        label.textContent = original
+      }, 1600)
+    })
+  }
+</script>

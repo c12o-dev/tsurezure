@@ -1,0 +1,80 @@
+---
+import { Image } from 'astro:assets'
+import { getEntry, render } from 'astro:content'
+import type { ImageMetadata } from 'astro'
+import { Icon } from 'astro-icon/components'
+import Prose from '../components/Prose.astro'
+import { profile, ui } from '../config'
+import Base from '../layouts/Base.astro'
+import { fill } from '../utils/text'
+
+// src/content/pages/about.md, under a header built from `profile`.
+const about = await getEntry('pages', 'about')
+if (!about) throw new Error('src/content/pages/about.md is missing')
+const { Content } = await render(about)
+
+const images = import.meta.glob<ImageMetadata>('../assets/**/*.{png,jpg,jpeg,webp,avif}', {
+  import: 'default',
+})
+const loadAvatar = images[`../${profile.avatar}`]
+if (!loadAvatar) throw new Error(`profile.avatar not found: src/${profile.avatar}`)
+const avatar = await loadAvatar()
+---
+
+<Base title={ui.about.title} description={fill(ui.about.description, { name: profile.name })}>
+  <div class="container">
+    <header class="page-head">
+      <span class="mono-label is-accent">{ui.about.title}</span>
+      <div class="about-id">
+        <Image src={avatar} alt="" width={72} height={72} class="about-id__avatar" />
+        <div>
+          <h1 class="t-h1-wiki about-id__name">{profile.name}</h1>
+          <p class="t-small about-id__bio">{profile.bio}</p>
+        </div>
+        <div class="about-id__links">
+          {profile.links.map((link) => (
+            <a class="icon-btn" href={link.url} target="_blank" rel="noopener me" aria-label={link.name}>
+              <Icon name={link.icon} aria-hidden="true" />
+            </a>
+          ))}
+        </div>
+      </div>
+    </header>
+    <Prose class="about-prose" wiki>
+      <Content />
+    </Prose>
+  </div>
+</Base>
+
+<style>
+.about-id__name {
+  margin: 0;
+}
+.about-id__bio {
+  margin: 4px 0 0;
+  color: var(--fg-3);
+}
+.about-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+.about-id :global(.about-id__avatar) {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+}
+.about-id__links {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+/* about.md starts with its own "# About"; the page header already says so. */
+:global(.about-prose > h1:first-child),
+:global(.about-prose > section:first-child > h1:first-child) {
+  display: none;
+}
+</style>

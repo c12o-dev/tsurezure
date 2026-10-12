@@ -1,0 +1,68 @@
+---
+import { features, ui } from '../config'
+import Base from '../layouts/Base.astro'
+---
+
+<Base title={ui.notFound.title} description={ui.notFound.description}>
+  <div class="container">
+    <section class="notfound surface grain">
+      <span class="mono-label is-accent">{ui.notFound.kicker}</span>
+      <h1 class="t-h1">{ui.notFound.title}</h1>
+      <p class="t-lead">{ui.notFound.description}</p>
+      <div class="pill-group">
+        <a class="pill" href="/">{ui.notFound.home}</a>
+        {features.wiki && <a class="pill" href="/wiki/">{ui.notFound.wiki}</a>}
+        {features.search && <button type="button" class="pill" data-open-search>{ui.notFound.search}</button>}
+      </div>
+      <span class="notfound__glyph" aria-hidden="true">{ui.notFound.glyph}</span>
+    </section>
+  </div>
+</Base>
+
+<style>
+.notfound h1,
+.notfound p {
+  margin: 0;
+}
+.notfound {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-8) var(--space-7);
+  min-height: 52vh;
+  justify-content: center;
+}
+.notfound > :not(.notfound__glyph) {
+  position: relative;
+  z-index: 1;
+  max-width: 36em;
+}
+.notfound::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: 70%;
+  aspect-ratio: 1;
+  background: radial-gradient(closest-side, rgba(232, 180, 88, 0.18), transparent);
+  pointer-events: none;
+}
+.notfound__glyph {
+  position: absolute;
+  right: -2%;
+  bottom: -18%;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: min(48vw, 520px);
+  line-height: 1;
+  color: rgba(244, 243, 239, 0.06);
+  pointer-events: none;
+  user-select: none;
+}
+@media (max-width: 639px) {
+  .notfound {
+    padding: var(--space-7) var(--space-5);
+  }
+}
+</style>

@@ -1,0 +1,51 @@
+---
+import type { GetStaticPaths } from 'astro'
+import WikiArticle from '../../components/WikiArticle.astro'
+import WikiIndex from '../../components/WikiIndex.astro'
+import { features, profile, site, ui } from '../../config'
+import Base from '../../layouts/Base.astro'
+import { getSortedWiki, type WikiPage } from '../../utils/content'
+import { isoDate } from '../../utils/date'
+import { getWikiUrl } from '../../utils/url'
+
+// One route for /wiki/ and /wiki/<topic>/<page>/, so that `features.wiki: false`
+// emits no wiki page at all.
+export const getStaticPaths = (async () => {
+  if (!features.wiki) return []
+  const all = await getSortedWiki()
+  return [
+    { params: { slug: undefined }, props: { entry: undefined, all } },
+    ...all.map((entry) => ({ params: { slug: entry.id }, props: { entry, all } })),
+  ]
+}) satisfies GetStaticPaths
+
+interface Props {
+  entry: WikiPage | undefined
+  all: WikiPage[]
+}
+
+const { entry, all } = Astro.props
+const jsonLd = entry && {
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: entry.data.title,
+  description: entry.data.summary,
+  keywords: entry.data.tags,
+  url: new URL(getWikiUrl(entry.id), Astro.site).href,
+  author: { '@type': 'Person', name: profile.name },
+  datePublished: isoDate(entry.data.created),
+  dateModified: isoDate(entry.data.updated),
+  inLanguage: site.lang.replace('_', '-'),
+}
+---
+
+{entry ? (
+  <Base title={entry.data.title} description={entry.data.summary} article>
+    <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+    <WikiArticle entry={entry} all={all} />
+  </Base>
+) : (
+  <Base title={ui.wiki.title} description={ui.wiki.description}>
+    <WikiIndex />
+  </Base>
+)}

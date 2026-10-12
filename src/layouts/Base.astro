@@ -1,0 +1,83 @@
+---
+import '@fontsource-variable/jetbrains-mono'
+import 'katex/dist/katex.css'
+import '../styles/global.css'
+import Footer from '../components/Footer.astro'
+import Header from '../components/Header.astro'
+import Search from '../components/Search.astro'
+import { features, profile, site, ui } from '../config'
+import { getOgImageUrl } from '../utils/url'
+
+interface Props {
+  /** Page name; the site title is appended. Omit on the home page. */
+  title?: string
+  description?: string
+  /** Absolute or site-relative URL. Defaults to the site-wide generated image. */
+  ogImage?: string
+  /** `og:type` article instead of website. */
+  article?: boolean
+  /** Overrides `site.lang`, e.g. for a post written in another language. */
+  lang?: string
+}
+
+const { title, description, ogImage, article = false, lang } = Astro.props
+const pageTitle = title ? `${title} - ${site.title}` : `${site.title} - ${site.subtitle}`
+const metaDescription = description || site.description
+const canonical = new URL(Astro.url.pathname, Astro.site)
+const ogImageUrl = new URL(ogImage ?? getOgImageUrl('site'), Astro.site)
+const htmlLang = (lang || site.lang).replace('_', '-')
+---
+
+<!doctype html>
+<html lang={htmlLang} class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content={site.themeColor ?? '#0b0b0c'} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <meta name="author" content={profile.name} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href={new URL('/rss.xml', Astro.site)} />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={site.ogLocale} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="generator" content={Astro.generator} />
+    <!-- Japanese web fonts: attached by src/scripts/fonts.ts after the load event. -->
+    <noscript><link rel="stylesheet" href="/fonts/fonts.css" /></noscript>
+    <slot name="head" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">{ui.skipToContent}</a>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    {features.search && <Search />}
+  </body>
+</html>
+
+<script>
+  // Every page script is bundled into an external module under /_astro/, so
+  // the CSP can keep `script-src 'self'` (see public/_headers).
+  import '../scripts/fonts'
+  import '../scripts/lightbox'
+  import '../scripts/mermaid'
+  import '../scripts/github-card'
+  import '../scripts/copy-code'
+</script>

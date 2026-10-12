@@ -701,6 +701,18 @@ a.tag:hover {
   height: 15px;
 }
 
+/* Title and count on one line, wrapping on narrow screens. */
+.page-head__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-head__row > h1 {
+  margin: 0;
+}
+
 /* ---------- breadcrumb ---------- */
 .breadcrumb {
   display: flex;

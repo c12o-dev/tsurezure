@@ -1,0 +1,33 @@
+---
+import type { Post } from '../utils/content'
+import { formatDate } from '../utils/date'
+import { getGeneratedCoverUrl, getPostUrl } from '../utils/url'
+import CoverImage from './CoverImage.astro'
+
+interface Props {
+  entry: Post
+  compact?: boolean
+  headingLevel?: 2 | 3
+}
+
+const { entry, compact = false, headingLevel = 3 } = Astro.props
+const { title, image, description, published, category } = entry.data
+const Heading = headingLevel === 2 ? 'h2' : 'h3'
+---
+
+<article class:list={['post-card surface', { 'post-card--compact': compact }]} data-category={category ?? ''}>
+  <div class="post-card__cover grain">
+    <CoverImage src={image ?? getGeneratedCoverUrl(entry.id)} />
+  </div>
+  <div class="post-card__body">
+    <div class="meta mono-label">
+      <time datetime={published.toISOString()}>{formatDate(published)}</time>
+      {category && <span class="meta__sep">/</span>}
+      {category && <span>{category}</span>}
+    </div>
+    <Heading class="post-card__title t-title-card clamp-2">
+      <a href={getPostUrl(entry.id)}>{title}</a>
+    </Heading>
+    {!compact && description && <p class="post-card__summary t-small clamp-2">{description}</p>}
+  </div>
+</article>

@@ -1,0 +1,259 @@
+---
+import { ui } from '../config'
+import Base from '../layouts/Base.astro'
+import { getCategories, getSortedPosts, getTags, type Post } from '../utils/content'
+import { formatMonthDay } from '../utils/date'
+import { fill } from '../utils/text'
+import { getCategoryUrl, getPostUrl, getTagUrl } from '../utils/url'
+
+// Every post is a permanent, crawlable link here. ?tag= / ?category= /
+// ?uncategorized= only toggle visibility client-side.
+const posts = await getSortedPosts()
+const categories = getCategories(posts)
+const tags = getTags(posts).sort((a, b) => b.count - a.count)
+const topTags = tags.slice(0, 12)
+const moreTags = tags.slice(12)
+
+const years = new Map<number, Post[]>()
+for (const post of posts) {
+  const year = post.data.published.getUTCFullYear()
+  years.set(year, [...(years.get(year) ?? []), post])
+}
+const groups = [...years].sort((a, b) => b[0] - a[0])
+---
+
+<Base title={ui.archive.title} description={ui.archive.description}>
+  <div class="container">
+    <header class="page-head">
+      <span class="mono-label is-accent">{ui.archive.title}</span>
+      <div class="page-head__row">
+        <h1 class="t-h1-wiki">{ui.archive.heading}</h1>
+        <span class="mono-label" data-archive-count data-template={ui.post.count}>{fill(ui.post.count, { n: posts.length })}</span>
+      </div>
+      <div class="archive-filters">
+        <div class="pill-group" aria-label={ui.archive.categories}>
+          <a class="pill" href="/archive/" data-pill-all>{ui.home.all}</a>
+          {categories.map((c) => (
+            <a class="pill" href={getCategoryUrl(c.name)} data-pill-category={c.name}>
+              {c.name}<span class="pill__count">{c.count}</span>
+            </a>
+          ))}
+        </div>
+        {tags.length > 0 && (
+          <div class="pill-group" aria-label={ui.archive.tags}>
+            {topTags.map((t) => (
+              <a class="pill" href={getTagUrl(t.name)} data-pill-tag={t.name}>#{t.name}<span class="pill__count">{t.count}</span></a>
+            ))}
+            {moreTags.length > 0 && (
+              <details class="archive-more">
+                <summary class="pill">{fill(ui.archive.moreTags, { n: moreTags.length })}</summary>
+                <div class="pill-group archive-more__list">
+                  {moreTags.map((t) => (
+                    <a class="pill" href={getTagUrl(t.name)} data-pill-tag={t.name}>#{t.name}<span class="pill__count">{t.count}</span></a>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+
+    <p
+      class="archive-filter-note t-small"
+      data-filter-note
+      data-template={ui.archive.filtering}
+      data-uncategorized={ui.archive.uncategorized}
+      data-reset={ui.archive.reset}
+      hidden
+    ></p>
+
+    <div id="archive-panel">
+      {groups.map(([year, list]) => (
+        <section class="archive-year" data-year-group>
+          <h2 class="archive-year__label">{year}<span class="mono-label" data-year-count>{list.length}</span></h2>
+          <ol class="archive-list">
+            {list.map((post) => (
+              <li class="archive-row" data-tags={JSON.stringify(post.data.tags)} data-category={post.data.category ?? ''}>
+                <a href={getPostUrl(post.id)}>
+                  <time class="mono-label" datetime={post.data.published.toISOString()}>{formatMonthDay(post.data.published)}</time>
+                  <span class="archive-row__title">{post.data.title}</span>
+                  <span class="archive-row__tags mono-label">{post.data.tags.slice(0, 2).join(' · ')}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+  </div>
+</Base>
+
+<style>
+.archive-more__list {
+  margin-top: 8px;
+}
+.archive-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.archive-more {
+  display: contents;
+}
+.archive-more > summary {
+  list-style: none;
+}
+.archive-more > summary::-webkit-details-marker {
+  display: none;
+}
+.archive-more[open] > summary {
+  display: none;
+}
+.archive-filter-note {
+  margin: calc(var(--space-5) * -1) 0 var(--space-6);
+  color: var(--fg-3);
+}
+.archive-filter-note a {
+  color: var(--accent);
+  margin-left: 8px;
+}
+.archive-year {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--space-5);
+  padding-block: var(--space-6);
+  border-bottom: 1px solid var(--line-1);
+}
+.archive-year:first-child {
+  padding-top: 0;
+}
+.archive-year[hidden] {
+  display: none;
+}
+.archive-year__label {
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+  align-self: start;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+}
+.archive-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.archive-row[hidden] {
+  display: none;
+}
+.archive-row a {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: 12px var(--space-3);
+  margin-inline: calc(var(--space-3) * -1);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease);
+}
+.archive-row a:hover {
+  background: var(--bg-2);
+}
+.archive-row__title {
+  color: var(--fg-1);
+  font-weight: 500;
+  line-height: 1.6;
+  transition: color var(--dur) var(--ease);
+}
+.archive-row a:hover .archive-row__title {
+  color: var(--accent);
+}
+.archive-row__tags {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .archive-year {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+  .archive-year__label {
+    position: static;
+  }
+  .archive-row a {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+  .archive-row__tags {
+    display: none;
+  }
+}
+</style>
+
+<script>
+  const panel = document.getElementById('archive-panel')
+  if (panel) {
+    const fill = (template: string, values: Record<string, string | number>) =>
+      template.replace(/\{(\w+)\}/g, (m, key: string) => (key in values ? String(values[key]) : m))
+    const params = new URLSearchParams(location.search)
+    const tags = params.getAll('tag')
+    const categories = params.getAll('category')
+    const uncategorized = params.get('uncategorized')
+    const filtering = tags.length > 0 || categories.length > 0 || Boolean(uncategorized)
+
+    let total = 0
+    for (const row of panel.querySelectorAll<HTMLElement>('.archive-row')) {
+      let postTags: string[] = []
+      try {
+        postTags = JSON.parse(row.dataset.tags || '[]')
+      } catch {}
+      const category = row.dataset.category || ''
+      let show = true
+      if (tags.length) show &&= postTags.some((t) => tags.includes(t))
+      if (categories.length) show &&= category !== '' && categories.includes(category)
+      if (uncategorized) show &&= category === ''
+      row.hidden = !show
+      if (show) total++
+    }
+    for (const group of panel.querySelectorAll<HTMLElement>('[data-year-group]')) {
+      const visible = group.querySelectorAll('.archive-row:not([hidden])').length
+      group.hidden = visible === 0
+      const count = group.querySelector('[data-year-count]')
+      if (count) count.textContent = String(visible)
+    }
+    const count = document.querySelector<HTMLElement>('[data-archive-count]')
+    if (count) count.textContent = fill(count.dataset.template ?? '{n}', { n: total })
+
+    // Reflect the active filter on the pills.
+    const mark = (selector: string) =>
+      document.querySelector(selector)?.classList.add('is-active')
+    if (!filtering) mark('[data-pill-all]')
+    for (const t of tags) mark(`[data-pill-tag="${CSS.escape(t)}"]`)
+    for (const c of categories) mark(`[data-pill-category="${CSS.escape(c)}"]`)
+    for (const pill of document.querySelectorAll('.pill.is-active')) {
+      pill.setAttribute('aria-current', 'true')
+    }
+
+    const note = document.querySelector<HTMLElement>('[data-filter-note]')
+    if (note && filtering) {
+      const label =
+        [...categories, ...tags.map((t) => `#${t}`)].join(' ') || (note.dataset.uncategorized ?? '')
+      note.hidden = false
+      note.textContent = fill(note.dataset.template ?? '', { label, n: total })
+      const reset = document.createElement('a')
+      reset.href = '/archive/'
+      reset.textContent = note.dataset.reset ?? ''
+      note.append(reset)
+      // A tag beyond the top 12 lives inside the collapsed list: open it.
+      if (document.querySelector('.archive-more .pill.is-active')) {
+        document.querySelector('.archive-more')?.setAttribute('open', '')
+      }
+    }
+  }
+</script>

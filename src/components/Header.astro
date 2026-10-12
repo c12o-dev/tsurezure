@@ -1,0 +1,142 @@
+---
+import { Icon } from 'astro-icon/components'
+import { features, nav, profile, site, ui } from '../config'
+
+const path = Astro.url.pathname
+const links = nav.filter((link) => features.wiki || !link.url.startsWith('/wiki/'))
+const isCurrent = (link: (typeof nav)[number]) => {
+  if (link.url === '/') {
+    // The home link owns the home grid, its paginated pages (/2/, /3/ …) and posts.
+    return path === '/' || /^\/\d+\/?$/.test(path) || path.startsWith(link.match ?? '/posts/')
+  }
+  return path.startsWith(link.match ?? link.url)
+}
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a href="/" class="wordmark" aria-label={`${site.title} ${ui.nav.homeAria}`}>
+      <span class="wordmark__dot" aria-hidden="true"></span>
+      {site.title}
+    </a>
+
+    <nav class="site-nav" aria-label={ui.nav.mainAria}>
+      {links.map((link) => (
+        <a href={link.url} aria-current={isCurrent(link) ? 'page' : undefined}>{link.name}</a>
+      ))}
+    </nav>
+
+    <div class="header-actions">
+      {features.search && (
+        <>
+          <button type="button" class="search-trigger" data-open-search aria-label={ui.search.open}>
+            <Icon name="material-symbols:search-rounded" aria-hidden="true" />
+            <span class="search-trigger__label">{ui.search.label}</span>
+            <span class="kbd" data-kbd-hint>⌘K</span>
+          </button>
+          <button type="button" class="icon-btn only-mobile" data-open-search aria-label={ui.search.open}>
+            <Icon name="material-symbols:search-rounded" aria-hidden="true" />
+          </button>
+        </>
+      )}
+      {profile.links.map((link) => (
+        <a href={link.url} class="icon-btn only-desktop" target="_blank" rel="noopener me" aria-label={link.name}>
+          <Icon name={link.icon} aria-hidden="true" />
+        </a>
+      ))}
+      <button
+        type="button"
+        class="icon-btn only-mobile"
+        id="menu-open"
+        aria-label={ui.nav.menuOpen}
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <Icon name="material-symbols:menu-rounded" aria-hidden="true" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label={ui.nav.menu} hidden>
+  <div class="mobile-menu__top">
+    <a href="/" class="wordmark">
+      <span class="wordmark__dot" aria-hidden="true"></span>
+      {site.title}
+    </a>
+    <button type="button" class="icon-btn" id="menu-close" aria-label={ui.nav.menuClose}>
+      <Icon name="material-symbols:close-rounded" aria-hidden="true" />
+    </button>
+  </div>
+  <ul class="mobile-menu__list">
+    {links.map((link, i) => (
+      <li>
+        <a href={link.url} aria-current={isCurrent(link) ? 'page' : undefined}>
+          {link.name}
+          <span class="mono-label">{String(i + 1).padStart(2, '0')}</span>
+        </a>
+      </li>
+    ))}
+    {profile.links.map((link) => (
+      <li>
+        <a href={link.url} target="_blank" rel="noopener me">
+          {link.name}
+          <span class="mono-label">↗</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<script>
+  // macOS shows ⌘K, everything else Ctrl K.
+  if (!/Mac|iPhone|iPad/.test(navigator.userAgent)) {
+    for (const el of document.querySelectorAll<HTMLElement>('[data-kbd-hint]')) {
+      el.textContent = 'Ctrl K'
+    }
+  }
+
+  const menu = document.getElementById('mobile-menu')
+  const openButton = document.getElementById('menu-open')
+  const closeButton = document.getElementById('menu-close')
+
+  function openMenu() {
+    if (!menu) return
+    menu.hidden = false
+    openButton?.setAttribute('aria-expanded', 'true')
+    document.body.style.overflow = 'hidden'
+    closeButton?.focus()
+  }
+
+  function closeMenu() {
+    if (!menu || menu.hidden) return
+    menu.hidden = true
+    openButton?.setAttribute('aria-expanded', 'false')
+    document.body.style.overflow = ''
+    openButton?.focus()
+  }
+
+  openButton?.addEventListener('click', openMenu)
+  closeButton?.addEventListener('click', closeMenu)
+  menu?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeMenu()
+      return
+    }
+    if (event.key !== 'Tab') return
+    // Keep focus inside the open menu.
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('a, button'))
+    const first = items[0]
+    const last = items[items.length - 1]
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  })
+  window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
+    if (event.matches) closeMenu()
+  })
+</script>

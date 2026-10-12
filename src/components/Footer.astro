@@ -1,0 +1,29 @@
+---
+import { license, profile, site, ui } from '../config'
+
+const year = new Date().getFullYear()
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__row">
+      <div class="site-footer__brand">
+        <a href="/" class="wordmark">
+          <span class="wordmark__dot" aria-hidden="true"></span>
+          {site.title}
+        </a>
+        <span>— {site.subtitle}</span>
+      </div>
+      <nav class="site-footer__links" aria-label={ui.footer.navAria}>
+        <a href="/rss.xml">{ui.footer.rss}</a>
+        <a href="/sitemap-index.xml">{ui.footer.sitemap}</a>
+        {profile.links.map((link) => (
+          <a href={link.url} target="_blank" rel="noopener me">{link.name}</a>
+        ))}
+      </nav>
+    </div>
+    <p class="mono-label site-footer__meta">
+      © {year} {profile.name} · <a href={license.url} target="_blank" rel="noopener license">{license.name}</a> · {ui.footer.builtWith}
+    </p>
+  </div>
+</footer>

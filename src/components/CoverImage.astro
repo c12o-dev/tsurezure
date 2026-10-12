@@ -1,0 +1,30 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+
+/**
+ * A post cover: the optimized `image` from frontmatter, or the generated
+ * /cover/<slug>.webp (1280×720) when the post has none.
+ */
+interface Props {
+  src: ImageMetadata | string
+  alt?: string
+  loading?: 'lazy' | 'eager'
+  sizes?: string
+  fetchpriority?: 'high' | 'low' | 'auto'
+}
+
+const {
+  src,
+  alt = '',
+  loading = 'lazy',
+  sizes = '(max-width: 640px) 100vw, 400px',
+  fetchpriority = 'auto',
+} = Astro.props
+---
+
+{typeof src === 'string' ? (
+  <img src={src} alt={alt} width="1280" height="720" loading={loading} decoding="async" fetchpriority={fetchpriority} />
+) : (
+  <Image src={src} alt={alt} loading={loading} decoding="async" fetchpriority={fetchpriority} sizes={sizes} widths={[480, 800, 1200]} />
+)}

@@ -1,0 +1,168 @@
+---
+import { render } from 'astro:content'
+import type { GetStaticPaths } from 'astro'
+import Breadcrumb from '../../components/Breadcrumb.astro'
+import CoverImage from '../../components/CoverImage.astro'
+import PostCard from '../../components/PostCard.astro'
+import Prose from '../../components/Prose.astro'
+import ShareLinks from '../../components/ShareLinks.astro'
+import Toc from '../../components/Toc.astro'
+import { profile, site, ui } from '../../config'
+import Base from '../../layouts/Base.astro'
+import { getAdjacentPosts, getSortedPosts, type Post } from '../../utils/content'
+import { formatDate, isoDate } from '../../utils/date'
+import { selectRelatedAndRecent } from '../../utils/post-relations'
+import { fill } from '../../utils/text'
+import { getCategoryUrl, getOgImageUrl, getPostUrl, getTagUrl } from '../../utils/url'
+
+export const getStaticPaths = (async () => {
+  const posts = await getSortedPosts()
+  return posts.map((entry) => ({ params: { slug: entry.id }, props: { entry, posts } }))
+}) satisfies GetStaticPaths
+
+interface Props {
+  entry: Post
+  posts: Post[]
+}
+
+const { entry, posts } = Astro.props
+const { Content, headings, remarkPluginFrontmatter } = await render(entry)
+const d = entry.data
+const words = Number(remarkPluginFrontmatter.words ?? 0).toLocaleString()
+const minutes = remarkPluginFrontmatter.minutes ?? 1
+const postUrl = new URL(getPostUrl(entry.id), Astro.site).href
+const ogImageUrl = new URL(getOgImageUrl(entry.id), Astro.site).href
+const { newer, older } = getAdjacentPosts(posts, entry.id)
+
+const { related, recent } = selectRelatedAndRecent(
+  posts.map((post) => ({ slug: post.id, data: post.data, entry: post })),
+  entry.id,
+  d.tags,
+  { relatedMax: 3, recentMax: 3 },
+)
+const suggestions = [...related, ...recent].slice(0, 3).map((p) => p.entry)
+
+const crumbs = [
+  { label: ui.post.home, href: '/' },
+  { label: ui.post.posts, href: '/archive/' },
+  ...(d.category ? [{ label: d.category, href: getCategoryUrl(d.category) }] : []),
+]
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: d.title,
+    description: d.description || d.title,
+    keywords: d.tags,
+    image: ogImageUrl,
+    url: postUrl,
+    author: { '@type': 'Person', name: profile.name, url: Astro.site?.href },
+    datePublished: isoDate(d.published),
+    ...(d.updated ? { dateModified: isoDate(d.updated) } : {}),
+    inLanguage: (d.lang || site.lang).replace('_', '-'),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      ...crumbs.map((crumb, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: crumb.label,
+        item: new URL(crumb.href, Astro.site).href,
+      })),
+      { '@type': 'ListItem', position: crumbs.length + 1, name: d.title, item: postUrl },
+    ],
+  },
+]
+---
+
+<Base title={d.title} description={d.description} lang={d.lang} article ogImage={ogImageUrl}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+
+  <div class="container">
+    <div class="article-layout">
+      <article class="article-layout__main">
+        <header class="article-head">
+          <Breadcrumb items={crumbs} />
+          <h1 class="article-head__title t-h1" data-pagefind-meta="title" data-pagefind-weight="10">{d.title}</h1>
+          {d.description && <p class="t-lead">{d.description}</p>}
+          <div class="meta mono-label">
+            <time datetime={d.published.toISOString()}>{formatDate(d.published)}</time>
+            {d.updated && (
+              <>
+                <span class="meta__sep">·</span>
+                <span>{ui.post.updated} <time datetime={d.updated.toISOString()}>{formatDate(d.updated)}</time></span>
+              </>
+            )}
+            <span class="meta__sep">·</span>
+            <span>{fill(ui.post.words, { n: words })}</span>
+            <span class="meta__sep">·</span>
+            <span>{fill(ui.post.minutes, { n: minutes })}</span>
+          </div>
+        </header>
+
+        {d.image && (
+          <div class="article-cover" id="post-cover">
+            <CoverImage src={d.image} loading="eager" sizes="(max-width: 768px) 100vw, 720px" />
+          </div>
+        )}
+
+        <div class="below-lg">
+          <Toc headings={headings} variant="inline" />
+        </div>
+
+        <Prose>
+          <Content />
+        </Prose>
+
+        <footer class="article-foot">
+          {d.tags.length > 0 && (
+            <div class="pill-group" aria-label={ui.post.tags}>
+              {d.tags.map((tag) => <a class="pill" href={getTagUrl(tag)}>#{tag}</a>)}
+            </div>
+          )}
+          <div class="article-foot__row">
+            <ShareLinks title={d.title} url={postUrl} />
+            <a class="more-link" href="/archive/">{ui.post.toList} <span class="arrow" aria-hidden="true">→</span></a>
+          </div>
+        </footer>
+
+        {(newer || older) && (
+          <nav class="post-nav" aria-label={ui.post.navAria}>
+            {newer ? (
+              <a class="post-nav__item surface" href={getPostUrl(newer.id)} rel="prev">
+                <span class="mono-label">{ui.post.newer}</span>
+                <span class="post-nav__title clamp-2">{newer.data.title}</span>
+              </a>
+            ) : <span />}
+            {older && (
+              <a class="post-nav__item surface is-next" href={getPostUrl(older.id)} rel="next">
+                <span class="mono-label">{ui.post.older}</span>
+                <span class="post-nav__title clamp-2">{older.data.title}</span>
+              </a>
+            )}
+          </nav>
+        )}
+      </article>
+
+      <aside class="article-layout__side" aria-label={ui.post.sidebar}>
+        <div class="article-layout__sticky">
+          <Toc headings={headings} variant="sidebar" />
+        </div>
+      </aside>
+    </div>
+
+    {suggestions.length > 0 && (
+      <section class="related" aria-labelledby="related-label">
+        <div class="section-head">
+          <h2 class="mono-label" id="related-label">{related.length > 0 ? ui.post.related : ui.post.recent}</h2>
+        </div>
+        <div class="post-grid">
+          {suggestions.map((post) => <PostCard entry={post} compact />)}
+        </div>
+      </section>
+    )}
+  </div>
+</Base>

@@ -1,0 +1,46 @@
+---
+import { render } from 'astro:content'
+import { ui } from '../config'
+import type { Post } from '../utils/content'
+import { formatDate } from '../utils/date'
+import { fill } from '../utils/text'
+import { getGeneratedCoverUrl, getPostUrl } from '../utils/url'
+import CoverImage from './CoverImage.astro'
+
+interface Props {
+  entry: Post
+}
+
+const { entry } = Astro.props
+const { title, image, description, published, category, tags } = entry.data
+const { remarkPluginFrontmatter } = await render(entry)
+const labels = [category, ...tags.slice(0, 2)].filter(Boolean)
+---
+
+<article class="featured surface grain">
+  <div class="featured__cover">
+    <CoverImage src={image ?? getGeneratedCoverUrl(entry.id)} loading="eager" fetchpriority="high" sizes="(max-width: 1024px) 100vw, 680px" />
+  </div>
+  <div class="featured__body">
+    <div class="meta mono-label">
+      {labels.map((label, i) => (
+        <>
+          {i > 0 && <span class="meta__sep">/</span>}
+          <span>{label}</span>
+        </>
+      ))}
+    </div>
+    <h2 class="featured__title t-display">
+      <a href={getPostUrl(entry.id)}>{title}</a>
+    </h2>
+    {description && <p class="t-lead clamp-3">{description}</p>}
+    <div class="meta mono-label">
+      <time datetime={published.toISOString()}>{formatDate(published)}</time>
+      <span class="meta__sep">·</span>
+      <span>{fill(ui.post.words, { n: Number(remarkPluginFrontmatter.words ?? 0).toLocaleString() })}</span>
+      <span class="meta__sep">·</span>
+      <span>{fill(ui.post.minutes, { n: remarkPluginFrontmatter.minutes ?? 1 })}</span>
+    </div>
+    <span class="featured__read" aria-hidden="true">{ui.post.readMore} <span class="arrow">→</span></span>
+  </div>
+</article>
